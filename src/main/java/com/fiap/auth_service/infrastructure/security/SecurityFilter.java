@@ -25,13 +25,13 @@ public class SecurityFilter extends OncePerRequestFilter {
     private JpaUserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         var token = this.recoverToken(request);
         if (token != null) {
             var login = tokenService.validateToken(token);
 
             if(login != null && !login.isEmpty()){
-                UserDetails user = userRepository.findFirstByUsername(login);
+                UserDetails user = userRepository.findByUsername(login);
 
                 if (user != null) {
                     var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

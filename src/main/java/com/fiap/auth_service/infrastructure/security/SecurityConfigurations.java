@@ -36,7 +36,6 @@ public class SecurityConfigurations {
                 .build();
     }
 
-    // Bean crucial para o Controller de Login funcionar
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
