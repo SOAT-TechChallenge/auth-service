@@ -94,17 +94,11 @@ jobs:
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_NAME }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_NAME }}:latest
 
-      - name: 'Terraform Init'
-        run: terraform init
-
-      - name: 'Terraform Plan'
-        run: terraform plan
-
-      - name: 'Terraform Apply'
-        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        run: terraform apply -auto-approve
-
       - name: 'Update ECS Service'
         run: |
           aws ecs update-service --cluster ${{ env.ECS_CLUSTER_NAME }} --service ${{ env.ECS_SERVICE_NAME }} --force-new-deployment
       
+      - name: 'Show ALB URL'
+        run: |
+          ALB_URL=$(aws elbv2 describe-load-balancers --names "auth-service-alb" --query "LoadBalancers[0].DNSName" --output text)
+          echo "::notice title=Acesse seu serviço aqui::http://$ALB_URL"
