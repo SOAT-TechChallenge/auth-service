@@ -57,10 +57,6 @@ jobs:
     environment: secrets
 
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-
-    defaults:
-      run:
-        working-directory: ./terraform
         
     steps:
       - name: 'Checkout GitHub Repository'
