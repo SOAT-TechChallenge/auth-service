@@ -229,7 +229,7 @@ resource "aws_lb_listener_rule" "allow_gateway" {
   condition {
     http_header {
       http_header_name = "x-apigateway-token"
-      values           = ["seredo-super-seguro-do-hackathon"]
+      values           = ["tech-challenge-hackathon"]
     }
   }
 }
