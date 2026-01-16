@@ -20,14 +20,12 @@ import com.fiap.auth_service.core.controler.AuthController;
 import com.fiap.auth_service.core.interfaces.UserDataSource;
 import com.fiap.auth_service.infrastructure.security.TokenService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Auth", description = "APIs relacionadas à autenticação")
+@Tag(name = "Auth", description = "APIs relacionadas à Autenticação do projeto TechChallenge")
 public class AuthWebController {
 
     @Autowired
