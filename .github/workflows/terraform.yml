@@ -43,7 +43,7 @@ jobs:
         id: jacoco
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: auth-service/target/site/jacoco/jacoco.xml
+          paths: target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 80 # Sua meta de 80%
           title: 'Coverage Report'
@@ -97,3 +97,8 @@ jobs:
       - name: 'Update ECS Service'
         run: |
           aws ecs update-service --cluster ${{ env.ECS_CLUSTER_NAME }} --service ${{ env.ECS_SERVICE_NAME }} --force-new-deployment
+      
+      - name: 'Show ALB URL'
+        run: |
+          ALB_URL=$(aws elbv2 describe-load-balancers --names "auth-service-alb" --query "LoadBalancers[0].DNSName" --output text)
+          echo "::notice title=Acesse seu serviço aqui::http://$ALB_URL"
