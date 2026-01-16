@@ -1,17 +1,16 @@
 terraform {
   required_version = ">= 1.0"
+  backend "s3" {
+    bucket = "tech-challenge-hackathon"
+    key    = "auth-service/terraform.tfstate"
+    region = "us-east-1"
+  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
-  # Descomente e configure se tiver o bucket criado no Lab
-  # backend "s3" {
-  #   bucket = "seu-bucket-tfstate"
-  #   key    = "auth-service/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
 }
 
 provider "aws" {
@@ -146,14 +145,14 @@ resource "aws_db_instance" "auth_db" {
   identifier              = "auth-service-db"
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
-  engine                  = "mysql"       # Mudado de postgres
-  engine_version          = "8.0"         # Versão MySQL
+  engine                  = "mysql"
+  engine_version          = "8.0"
   username                = "root"
-  password                = "12345678"    # Senha padrão do Lab
+  password                = "12345678"
   db_name                 = "auth_db"
   parameter_group_name    = "default.mysql8.0"
   skip_final_snapshot     = true
-  publicly_accessible     = true          # True para facilitar seu acesso via Workbench
+  publicly_accessible     = true
   vpc_security_group_ids  = [aws_security_group.rds_sg.id]
   db_subnet_group_name    = aws_db_subnet_group.auth_db_subnet.name
 
@@ -238,7 +237,7 @@ resource "aws_ecs_task_definition" "auth_task" {
 
   container_definitions = jsonencode([{
     name  = "auth-service"
-    image = "${aws_ecr_repository.auth_service.repository_url}:latest" # Aponta para o ECR criado acima
+    image = "${aws_ecr_repository.auth_service.repository_url}:latest"
     portMappings = [{
       containerPort = 8080
       hostPort      = 8080
@@ -292,7 +291,6 @@ resource "aws_ecs_service" "auth_service" {
   desired_count   = 1
   launch_type     = "FARGATE"
 
-  # Tempo alto para evitar loop de restart se o Java demorar
   health_check_grace_period_seconds = 300
 
   network_configuration {
