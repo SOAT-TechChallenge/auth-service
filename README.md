@@ -1,5 +1,6 @@
 # Auth Service
 
+
 ## Descrição
 
 Este é um microsserviço responsável pela autenticação do projeto TechChallenge. Desenvolvido como parte da fase 5 da pós-graduação em Arquitetura de Software da FIAP, este serviço gerencia a autenticação e autorização de usuários, utilizando JWT para tokens de segurança.
