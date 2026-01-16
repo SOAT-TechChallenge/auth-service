@@ -4,13 +4,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'auth-service/**'
   pull_request:
     branches:
       - main
-    paths:
-      - 'auth-service/**'
   workflow_dispatch:
 
 # --- VARIÁVEIS FIXAS ---
@@ -25,10 +21,6 @@ jobs:
   java-ci:
     name: 'Java Build & Quality Check'
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ./auth-service
 
     steps:
       - name: 'Checkout Repository'
@@ -68,7 +60,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./auth-service
+        working-directory: ./terraform
         
     steps:
       - name: 'Checkout GitHub Repository'
