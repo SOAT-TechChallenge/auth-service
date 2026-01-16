@@ -60,7 +60,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./infra  
+        working-directory: /infra  
 
     steps:
       - name: 'Checkout GitHub Repository'
