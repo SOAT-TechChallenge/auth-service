@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 1.0"
   backend "s3" {
-    bucket = "tech-challenge-hackathon"
+    bucket = "challenge-hackathon"
     key    = "auth-service/terraform.tfstate"
     region = "us-east-1"
   }
@@ -17,7 +17,7 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# --- Data Sources (Busca recursos existentes) ---
+# --- Data Sources ---
 
 data "aws_vpc" "default" {
   default = true
@@ -34,8 +34,7 @@ data "aws_iam_role" "lab_role" {
   name = "LabRole"
 }
 
-# --- ECR (Repositório de Imagem) ---
-# Imagem é privada/local
+# --- ECR ---
 resource "aws_ecr_repository" "auth_service" {
   name                 = "auth-service-repo"
   image_tag_mutability = "MUTABLE"
@@ -102,7 +101,6 @@ resource "aws_security_group" "rds_sg" {
   description = "Security group for RDS MySQL"
   vpc_id      = data.aws_vpc.default.id
 
-  # Permite acesso da aplicação ECS
   ingress {
     from_port       = 3306
     to_port         = 3306
@@ -110,7 +108,6 @@ resource "aws_security_group" "rds_sg" {
     security_groups = [aws_security_group.ecs_sg.id]
   }
 
-  # Permite acesso externo (para seu Workbench funcionar)
   ingress {
     from_port   = 3306
     to_port     = 3306
@@ -142,19 +139,19 @@ resource "aws_db_subnet_group" "auth_db_subnet" {
 }
 
 resource "aws_db_instance" "auth_db" {
-  identifier              = "auth-service-db"
-  instance_class          = "db.t3.micro"
-  allocated_storage       = 20
-  engine                  = "mysql"
-  engine_version          = "8.0"
-  username                = "root"
-  password                = "12345678"
-  db_name                 = "auth_db"
-  parameter_group_name    = "default.mysql8.0"
-  skip_final_snapshot     = true
-  publicly_accessible     = true
-  vpc_security_group_ids  = [aws_security_group.rds_sg.id]
-  db_subnet_group_name    = aws_db_subnet_group.auth_db_subnet.name
+  identifier             = "auth-service-db"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  engine                 = "mysql"
+  engine_version         = "8.0"
+  username               = "root"
+  password               = "12345678"
+  db_name                = "auth_db"
+  parameter_group_name   = "default.mysql8.0"
+  skip_final_snapshot    = true
+  publicly_accessible    = true
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.auth_db_subnet.name
 
   apply_immediately       = true
   backup_retention_period = 0
@@ -188,7 +185,7 @@ resource "aws_lb_target_group" "auth_tg" {
   target_type = "ip"
 
   health_check {
-    path                = "/actuator/health" # O endpoint do Spring Actuator
+    path                = "/actuator/health"
     interval            = 60
     timeout             = 30
     healthy_threshold   = 2
@@ -201,12 +198,13 @@ resource "aws_lb_target_group" "auth_tg" {
   }
 }
 
+# LISTENER PRINCIPAL (Bloqueia tudo por padrão)
 resource "aws_lb_listener" "auth_listener" {
   load_balancer_arn = aws_lb.auth_alb.arn
   port              = "80"
   protocol          = "HTTP"
 
-default_action {
+  default_action {
     type = "fixed-response"
 
     fixed_response {
@@ -217,13 +215,14 @@ default_action {
   }
 }
 
+# --- Só libera acesso ao alb se passar o token no header
 resource "aws_lb_listener_rule" "allow_gateway" {
-  listener_arn = aws_lb_listener.http.arn
+  listener_arn = aws_lb_listener.auth_listener.arn
   priority     = 100
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.main.arn
+    target_group_arn = aws_lb_target_group.auth_tg.arn
   }
 
   condition {
@@ -297,6 +296,14 @@ resource "aws_ecs_task_definition" "auth_task" {
       {
         name  = "SERVER_PORT"
         value = "8080"
+      },
+      {
+        name  = "NOTIFICATION_SERVICE_URL"
+        value = "http://notification-service-alb-1481433257.us-east-1.elb.amazonaws.com"
+      },
+      {
+        name  = "API_GATEWAY_TOKEN"
+        value = "tech-challenge-hackathon"
       }
     ]
   }])
@@ -327,7 +334,6 @@ resource "aws_ecs_service" "auth_service" {
     container_port   = 8080
   }
 
-
   deployment_controller {
     type = "ECS"
   }
@@ -339,7 +345,7 @@ resource "aws_ecs_service" "auth_service" {
   depends_on = [aws_lb_listener.auth_listener]
 }
 
-# --- Outputs (Para facilitar sua vida) ---
+# --- Outputs ---
 
 output "ecr_repo" {
   value = aws_ecr_repository.auth_service.repository_url

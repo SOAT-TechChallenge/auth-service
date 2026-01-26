@@ -14,6 +14,7 @@ import com.fiap.auth_service._webApi.dto.UserRequestDTO;
 import com.fiap.auth_service.core.application.dto.UserDTO;
 import com.fiap.auth_service.core.application.dto.UserInputDTO;
 import com.fiap.auth_service.core.controler.UserController;
+import com.fiap.auth_service.core.interfaces.NotificationDataSource;
 import com.fiap.auth_service.core.interfaces.UserDataSource;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,8 +28,8 @@ public class UserWebController {
 
     private final UserController controller;
 
-    public UserWebController(UserDataSource userDataSource, PasswordEncoder passwordEncoder) {
-        this.controller = UserController.build(userDataSource, passwordEncoder);
+    public UserWebController(NotificationDataSource notificationDataSource, UserDataSource userDataSource, PasswordEncoder passwordEncoder) {
+        this.controller = UserController.build(notificationDataSource, userDataSource, passwordEncoder);
     }
 
     @PostMapping("/create")

@@ -19,9 +19,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.fiap.auth_service.core.controler.UserController;
+import com.fiap.auth_service.core.interfaces.NotificationDataSource;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
+
+    @Mock
+    private NotificationDataSource notificationDataSource;
 
     @Mock
     private UserDataSource userDataSource;
@@ -33,7 +37,7 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = UserController.build(userDataSource, passwordEncoder);
+        userController = UserController.build(notificationDataSource, userDataSource, passwordEncoder);
     }
 
     @Test
