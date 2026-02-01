@@ -291,7 +291,7 @@ resource "aws_ecs_task_definition" "auth_task" {
       },
       {
         name  = "JWT_SECRET"
-        value = "minha-chave-secreta-do-lab"
+        value = "techchallenge"
       },
       {
         name  = "SERVER_PORT"
@@ -299,7 +299,7 @@ resource "aws_ecs_task_definition" "auth_task" {
       },
       {
         name  = "NOTIFICATION_SERVICE_URL"
-        value = "http://notification-service-alb-1481433257.us-east-1.elb.amazonaws.com"
+        value = "http://notification-service-alb-1004450262.us-east-1.elb.amazonaws.com"
       },
       {
         name  = "API_GATEWAY_TOKEN"
