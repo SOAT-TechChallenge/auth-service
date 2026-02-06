@@ -9,8 +9,3 @@ variable "jwt_secret" {
   type        = string
   sensitive   = true
 }
-
-variable "notification_service_url" {
-  description = "URL do Load Balancer do Notification Service"
-  type        = string
-}
