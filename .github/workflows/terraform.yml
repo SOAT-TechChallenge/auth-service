@@ -2,14 +2,11 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
-# --- VARIÁVEIS FIXAS ---
 env:
   AWS_REGION: "us-east-1"
   ECR_REPOSITORY_NAME: "auth-service-repo"
@@ -17,11 +14,10 @@ env:
   ECS_SERVICE_NAME: "auth-service"
 
 jobs:
-  # --- INTEGRAÇÃO CONTÍNUA (Qualidade) ---
+  # --- 1. QUALIDADE (Java) ---
   java-ci:
     name: 'Java Build & Quality Check'
     runs-on: ubuntu-latest
-
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
@@ -33,30 +29,95 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Roda os testes e gera o relatório XML do JaCoCo
       - name: 'Build and Verify Coverage'
         run: mvn verify
 
-      # --- Comenta a cobertura no PR ---
       - name: 'Publish Coverage to PR'
         if: github.event_name == 'pull_request'
-        id: jacoco
         uses: madrapps/jacoco-report@v1.6.1
         with:
           paths: target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 80 # Sua meta de 80%
+          min-coverage-overall: 80 
           title: 'Coverage Report'
           update-comment: true
 
-  # --- DEPLOY (Entrega Contínua) ---
-  deploy:
-    name: 'Build Docker & Deploy to ECS'
+  # --- 2. TERRAFORM PLAN (Sempre roda) ---
+  terraform-plan:
+    name: 'Terraform Plan'
     needs: java-ci
     runs-on: ubuntu-latest
     environment: secrets
+    defaults:
+      run:
+        working-directory: ./infra
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
 
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      - name: 'Configure AWS Credentials'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 'Setup Terraform'
+        uses: hashicorp/setup-terraform@v2
+
+      - name: 'Terraform Init'
+        run: terraform init
+
+      - name: 'Terraform Plan'
+        run: |
+          terraform plan \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="notification_service_url=${{ secrets.NOTIFICATION_ALB_DNS }}"
+
+  # --- 3. TERRAFORM APPLY (Apenas Merge na Main) ---
+  terraform-apply:
+    name: 'Terraform Apply'
+    needs: terraform-plan
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: secrets
+    defaults:
+      run:
+        working-directory: ./infra
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Configure AWS Credentials'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 'Setup Terraform'
+        uses: hashicorp/setup-terraform@v2
+
+      - name: 'Terraform Init'
+        run: terraform init
+
+      - name: 'Terraform Apply'
+        run: |
+          terraform apply -auto-approve \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
+            -var="notification_service_url=${{ secrets.NOTIFICATION_ALB_DNS }}"
+
+  # --- 4. DEPLOY (Apenas Merge na Main) ---
+  deploy:
+    name: 'Build Docker & Deploy to ECS'
+    needs: terraform-apply
+    runs-on: ubuntu-latest
+    environment: secrets 
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
 
     steps:
       - name: 'Checkout GitHub Repository'
@@ -101,4 +162,4 @@ jobs:
       - name: 'Show ALB URL'
         run: |
           ALB_URL=$(aws elbv2 describe-load-balancers --names "auth-service-alb" --query "LoadBalancers[0].DNSName" --output text)
-          echo "::notice title=Acesse seu serviço aqui::http://$ALB_URL"
+          echo "::notice title=Link de Acesso::http://$ALB_URL"
