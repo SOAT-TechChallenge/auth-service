@@ -71,6 +71,10 @@ resource "aws_db_instance" "auth_db" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.auth_db_subnet.name
   apply_immediately      = true
+
+  lifecycle {
+    prevent_destroy = true 
+  }
 }
 
 # --- Load Balancer (ALB) ---
@@ -88,7 +92,14 @@ resource "aws_lb_target_group" "auth_tg" {
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
-  health_check { path = "/actuator/health" }
+  health_check {
+    path                = "/actuator/health"
+    interval            = 60
+    timeout             = 30
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    matcher             = "200"
+  }
 }
 
 resource "aws_lb_listener" "auth_listener" {

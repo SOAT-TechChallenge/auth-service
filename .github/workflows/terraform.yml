@@ -74,7 +74,7 @@ jobs:
           terraform plan \
             -var="db_password=${{ secrets.DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
-            -var="notification_service_url=${{ secrets.NOTIFICATION_ALB_DNS }}"
+            -var="notification_service_url=${{ secrets.NOTIFICATION_SERVICE_URL }}"
 
   # --- 3. TERRAFORM APPLY (Apenas Merge na Main) ---
   terraform-apply:
@@ -109,7 +109,7 @@ jobs:
           terraform apply -auto-approve \
             -var="db_password=${{ secrets.DB_PASSWORD }}" \
             -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
-            -var="notification_service_url=${{ secrets.NOTIFICATION_ALB_DNS }}"
+            -var="notification_service_url=${{ secrets.NOTIFICATION_SERVICE_URL }}"
 
   # --- 4. DEPLOY (Apenas Merge na Main) ---
   deploy:
