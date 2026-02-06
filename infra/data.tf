@@ -12,3 +12,7 @@ data "aws_subnets" "all" {
 data "aws_iam_role" "lab_role" {
   name = "LabRole"
 }
+
+data "aws_ssm_parameter" "notification_url" {
+  name = "/notification/alb_dns_name"
+}

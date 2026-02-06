@@ -153,7 +153,7 @@ resource "aws_ecs_task_definition" "auth_task" {
       { name = "SPRING_DATASOURCE_USERNAME", value = "root" },
       { name = "SPRING_DATASOURCE_PASSWORD", value = var.db_password },
       { name = "JWT_SECRET", value = var.jwt_secret },
-      { name = "NOTIFICATION_SERVICE_URL", value = var.notification_service_url },
+      { name = "NOTIFICATION_SERVICE_URL", value = "http://${data.aws_ssm_parameter.notification_url.value}" },
       { name = "API_GATEWAY_TOKEN", value = "tech-challenge-hackathon" }
     ]
     logConfiguration = {
