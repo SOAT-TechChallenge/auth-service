@@ -73,7 +73,7 @@ resource "aws_db_instance" "auth_db" {
   apply_immediately      = true
 
   lifecycle {
-    prevent_destroy = true 
+    prevent_destroy = true
   }
 }
 
@@ -191,4 +191,12 @@ resource "aws_ecs_service" "auth_service" {
   lifecycle {
     ignore_changes = [task_definition, load_balancer]
   }
+}
+
+resource "aws_ssm_parameter" "auth_alb_dns" {
+  name        = "/auth/alb_dns_name"
+  description = "DNS do Load Balancer do Auth Service para o API Gateway"
+  type        = "String"
+  value       = aws_lb.auth_alb.dns_name
+  overwrite   = true
 }
